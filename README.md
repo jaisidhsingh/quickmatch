@@ -17,7 +17,7 @@ A library for conveniently using SOTA face-recognition networks.
 The following Python libraries are required for running inference on the face-matchers and can be installed by using `pip install <library-name>`.
 
 ```plaintext
-numpy
+opencv-python
 torch
 tqdm
 facenet-pytorch

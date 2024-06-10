@@ -1,45 +1,15 @@
-#from turtle import back
 import torch
-import torch.nn as nn
-from collections import OrderedDict
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import os
-import pickle
-import numpy as np
-import random
 import argparse
-import sys
 import warnings
 from PIL import Image
-from config.config import config as cfg
+from .config.config import config as cfg
 from tqdm import tqdm
-from backbones.iresnet import iresnet100
+from .backbones.iresnet import iresnet100
 warnings.simplefilter('ignore')
-#from torchsummary import summary
-#import torchsummary
-from time import time
 import argparse
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--input-dir",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--output-path",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--name",
-    type=str,
-    required=True
-)
-args = parser.parse_args()
-
 
 
 class InferenceDataset(Dataset):
@@ -58,11 +28,11 @@ class InferenceDataset(Dataset):
             img = self.transforms(img)
         return img
 
-def infer(backbone, inference_loader, output_path):
+def infer(backbone, inference_loader, output_path, args):
     feats = []
     with torch.no_grad():
         for img in tqdm(inference_loader):
-            img = img.float().cuda()
+            img = img.float().to(args.device)
             features = backbone(img)
             feats.append(features.cpu())
             del img
@@ -71,10 +41,10 @@ def infer(backbone, inference_loader, output_path):
         feats = torch.cat(feats, dim=0)
         torch.save(feats, output_path)
 
-def main(image_dir, output_path):
-    dev = torch.device('cuda')
+def main(image_dir, output_path, args):
+    dev = torch.device(args.device)
     backbone = iresnet100(num_features=cfg.embedding_size).to(dev)
-    model_path = f'{args.name}/models/295672backbone.pth'
+    model_path = os.path.join(args.ckpt_folder, 'elasticface_backbone.pth')
     state_dict = torch.load(model_path)
     backbone.load_state_dict(state_dict)
     backbone = backbone.to(dev)
@@ -86,7 +56,7 @@ def main(image_dir, output_path):
 
     inference_dataset = InferenceDataset(input_folder=image_dir, transforms=inference_transforms)
     inference_loader = DataLoader(inference_dataset, batch_size=32)
-    infer(backbone, inference_loader, output_path)
+    infer(backbone, inference_loader, output_path, args)
 
 
 
