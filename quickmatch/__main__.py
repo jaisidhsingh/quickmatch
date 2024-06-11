@@ -1,7 +1,6 @@
 import os
 import torch
 import argparse
-import subprocess
 from onedrivedownloader import download
 from sys import platform
 from .ArcFace import inference as arcface_inference
@@ -26,6 +25,9 @@ def download_checkpoint(args):
 	if not torch.cuda.is_available():
 		print("CUDA not found, using CPU instead.")
 		args.device = "cpu"
+	else:
+		print("CUDA found, using GPU for creating face-matcher embeddings.")
+		args.device = "cuda"
 
 	if platform == "linux" or platform == "linux2":   
 		ckpt_save_folder = os.path.join(os.getenv("HOME"), ".cache", "pip", args.ckpt_folder)
@@ -56,6 +58,7 @@ def download_checkpoint(args):
 
 		if not os.path.exists(f"{args.matcher.lower()}_backbone.pth"):
 			try:
+				print("Downloading model weights...")
 				download(
 					url, 
 					filename=f"{args.matcher.lower()}_backbone.pth", 
@@ -71,10 +74,11 @@ def download_checkpoint(args):
 				print(err)
 
 		else:
-			al_good = True
+			all_good = True
 
 	else:
-		print("Model already downloaded and cached. Loading from cache directly.")
+		if args.matcher != "FaceNet":
+			print("Model already downloaded and cached. Loading from cache directly.")
 
 	os.chdir(main_folder)
 	return all_good
@@ -82,10 +86,17 @@ def download_checkpoint(args):
 
 def run(args):
 	go_ahead = download_checkpoint(args)
+	matcher_mapping = {
+		"ArcFace": arcface_inference,
+		"ElasticFace": elasticface_inference,
+		"FaceNet": facenet_inference,
+		"SphereFace": sphereface_inference
+	}
 
 	if go_ahead:
-		# subprocess.call(f"python quickmatch/{args.matcher}/inference.py --name={args.matcher} --input-dir={args.input_folder} --output-path={args.output_path}")
-		inference.main(args.input_folder, args.output_path, args)
+		inference_function = matcher_mapping[args.matcher]
+		inference_function.main(args.input_folder, args.output_path, args)
+  
 	else:
 		print("Error in downloading model checkpoint. Embedding generation cannot run.")
 

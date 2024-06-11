@@ -39,13 +39,15 @@ def infer(backbone, inference_loader, output_path, args):
             del features
         
         feats = torch.cat(feats, dim=0)
+        print(f"Made face matcher embeddings with shape: {feats.shape}")
         torch.save(feats, output_path)
+        print(f"Embeddings saved at {output_path}")
 
 def main(image_dir, output_path, args):
     dev = torch.device(args.device)
     backbone = iresnet100(num_features=cfg.embedding_size).to(dev)
     model_path = os.path.join(args.ckpt_folder, 'elasticface_backbone.pth')
-    state_dict = torch.load(model_path)
+    state_dict = torch.load(model_path, map_location=args.device)
     backbone.load_state_dict(state_dict)
     backbone = backbone.to(dev)
     backbone.eval()
@@ -55,9 +57,10 @@ def main(image_dir, output_path, args):
     ])
 
     inference_dataset = InferenceDataset(input_folder=image_dir, transforms=inference_transforms)
+    
+    print(f"Started processing {len(inference_dataset)} images.")
+    
     inference_loader = DataLoader(inference_dataset, batch_size=32)
     infer(backbone, inference_loader, output_path, args)
-
-
-
-main(args.input_dir, args.output_path)
+    
+    print("Done")

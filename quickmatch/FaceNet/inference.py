@@ -1,36 +1,14 @@
 import torch
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import os
-import pickle
 from torchvision import transforms
 from PIL import Image
 from tqdm import tqdm
-import numpy as np
 from torch.utils.data import Dataset, DataLoader
-import seaborn as sns
-import matplotlib.pyplot as plt
 import warnings
 warnings.simplefilter('ignore')
 import argparse
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--input-dir",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--output-path",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--name",
-    type=str,
-    required=True
-)
-args = parser.parse_args()
 
 def inference_transforms(mtcnn, img):
     img_cr = mtcnn(img)
@@ -58,27 +36,30 @@ class InferenceDataset(Dataset):
                 img = transforms.Compose([transforms.PILToTensor()])(img)
         return img
 
-def inference(resnet, inference_loader, output_path):
+def inference(resnet, inference_loader, output_path, args):
     features = []
     with torch.no_grad():
         for img in tqdm(inference_loader):
             tmp = img   
             img = torch.cat(img, axis=0).view((len(tmp), 3, 256, 256))
-            img = img.cuda()    
+            img = img.to(args.device)    
             ie = resnet(img) 
             features.append(ie.cpu())
     
-    features = torch.cat(features, dim=0)
+    feats = torch.cat(features, dim=0)
+    print(f"Made face matcher embeddings with shape: {feats.shape}")
     torch.save(features, output_path)
+    print(f"Embeddings saved at {output_path}")
 
-def main(input_dir, output_path):
+def main(input_dir, output_path, args):
     mtcnn = MTCNN(image_size=256)
-    resnet = InceptionResnetV1(pretrained='vggface2').cuda().eval()
+    resnet = InceptionResnetV1(pretrained='vggface2').to(args.device).eval()
 
     inference_dataset = InferenceDataset(input_folder=input_dir, mtcnn=mtcnn, transforms=inference_transforms)
+    
+    print(f"Started processing {len(inference_dataset)} images.")
+    
     inference_loader = DataLoader(inference_dataset, batch_size=32, collate_fn=lambda x: x)
-    inference(resnet, inference_loader, output_path)
-
-
-main(args.input_dir, args.output_path)
-
+    inference(resnet, inference_loader, output_path, args)
+    
+    print("Done")

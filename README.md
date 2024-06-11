@@ -4,20 +4,17 @@ A library for conveniently using SOTA face-recognition networks.
 
 ## Provided Face-Matchers
 
-> ElasticFace
-
-> ArcFace
-
-> SphereFace
-
-> FaceNet
+1. ElasticFace
+2. ArcFace
+3. SphereFace
+4. FaceNet
 
 ## Installation
 
-The following Python libraries are required for running inference on the face-matchers and can be installed by using `pip install <library-name>`.
+The following Python libraries are required for running inference on the face-matchers and can be installed by using `pip install <library-name>`. The package will automatically install them at the versions that were used to test it.
 
 ```plaintext
-opencv-python
+easydict
 torch
 tqdm
 facenet-pytorch

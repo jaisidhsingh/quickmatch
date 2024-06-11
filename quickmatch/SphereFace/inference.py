@@ -1,42 +1,12 @@
-#from turtle import back
 import torch
-import torch.nn as nn
-from collections import OrderedDict
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 import os
-import pickle
-import numpy as np
-import random
-import argparse
-import sys
 import warnings
 from PIL import Image
 from tqdm import tqdm
 warnings.simplefilter('ignore')
-#from torchsummary import summary
-#import torchsummary
-from time import time
-from net_sphere import sphere20a
-import argparse
-parser = argparse.ArgumentParser()
-
-parser.add_argument(
-    "--input-dir",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--output-path",
-    type=str,
-    required=True
-)
-parser.add_argument(
-    "--name",
-    type=str,
-    required=True
-)
-args = parser.parse_args()
+from .net_sphere import sphere20a
 
 
 class InferenceDataset(Dataset):
@@ -56,11 +26,11 @@ class InferenceDataset(Dataset):
             img = self.transforms(img)
         return img
 
-def infer(backbone, inference_loader, output_path):
+def infer(backbone, inference_loader, output_path, args):
     feats = []
     with torch.no_grad():
         for img in tqdm(inference_loader):
-            img = img.float().cuda()
+            img = img.float().to(args.device)
             img = (img-127.5) / 128.0
             features = backbone(img)
             feats.append(features.cpu())
@@ -68,12 +38,14 @@ def infer(backbone, inference_loader, output_path):
             del features
         
         feats = torch.cat(feats, dim=0)
+        print(f"Made face matcher embeddings with shape: {feats.shape}")
         torch.save(feats, output_path)
+        print(f"Embeddings saved at {output_path}")
 
-def main(input_dir, output_path):
-    dev = torch.device('cuda')
+def main(input_dir, output_path, args):
+    dev = torch.device(args.device)
     backbone = sphere20a(feature=True)
-    model_path = f'{args.name}/model/sphere20a_20171020.pth'
+    model_path = os.path.join(args.ckpt_folder, "sphereface_backbone.pth")
     state_dict = torch.load(model_path)
     backbone.load_state_dict(state_dict)
     backbone = backbone.to(dev)
@@ -84,8 +56,10 @@ def main(input_dir, output_path):
     ])
 
     inference_dataset = InferenceDataset(input_folder=input_dir, transforms=inference_transforms)
+    
+    print(f"Started processing {len(inference_dataset)} images.")
+    
     inference_loader = DataLoader(inference_dataset, batch_size=32)
-    infer(backbone, inference_loader, output_path)
-
-
-main(args.input_dir, args.output_path)
+    infer(backbone, inference_loader, output_path, args)
+    
+    print("Done")

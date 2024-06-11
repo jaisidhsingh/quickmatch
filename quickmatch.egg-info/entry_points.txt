@@ -1,3 +1,0 @@
-[console_scripts]
-quickmatch = quickmatch.__main__
-

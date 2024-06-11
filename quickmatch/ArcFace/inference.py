@@ -1,6 +1,4 @@
-import argparse
 import os
-import cv2
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -9,34 +7,12 @@ from torchvision import transforms
 from tqdm import tqdm
 from types import SimpleNamespace
 from PIL import Image
-import argparse
-
-
-# parser = argparse.ArgumentParser()
-# parser.add_argument(
-#     "--input-dir",
-#     type=str,
-#     required=True
-# )
-# parser.add_argument(
-#     "--output-path",
-#     type=str,
-#     required=True
-# )
-# parser.add_argument(
-#     "--name",
-#     type=str,
-#     required=True
-# )
-# args = parser.parse_args()
 
 
 def inference_transforms(img):
-    # img = cv2.imread(img)
     img = Image.open(img).convert("RGB")
     img = img.resize((112, 112))
     img = np.array(img)
-    # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = np.transpose(img, (2, 0, 1))
     img = torch.from_numpy(img).float()
     img.div_(255).sub_(0.5).div_(0.5)
