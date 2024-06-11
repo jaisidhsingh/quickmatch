@@ -18,4 +18,16 @@ setup(
 			"quickmatch = quickmatch.__main__",
 		]
 	},
+    author='Jaisidh Singh',
+    author_email='jaisidhsingh@gmail.com',
+    description='A command-line tool for obtaining face-matcher embeddings across 4 SOTA face-matchers.',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    url='https://github.com/jaisidhsingh/quickmatch',
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.6',
 )
