@@ -11,7 +11,7 @@ A simply command-line tool for conveniently using SOTA face-recognition networks
 
 ## Installation
 
-Installation can be simply done by `pip install quickmatch`. 
+This package is released on <a href="https://pypi.org">PyPi</a> and can be found <a href="https://pypi.org/project/quickmatch/0.1.0/">here</a>. Installation can be simply done by `pip install quickmatch`. 
 
 ### Dependancies
 
